@@ -3,7 +3,7 @@ Cheers to my Docker Images repository, you can use this images to deploy target 
 
 1. dockerfile.mysqlready | PHP 7.3
 * build with command: docker build -f ./dockerfile.mysqlready -t php7.3-fpm/mysqlready .
-* build with compose:
+* after build run compose:
 ```yml
 version: '1'
 services:
@@ -25,6 +25,7 @@ services:
     command: mysqld --user=root --default-authentication-plugin=mysql_native_password
     environment:
       - MYSQL_ROOT_PASSWORD={your_mysql_root_password}
+    restart: always
     container_name: mysqlServer
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -40,4 +41,43 @@ services:
       - PHP_UPLOAD_MAX_FILESIZE=100MB
     container_name: phpAdminSQLHost
 ```
-
+* or build with compose:
+```yml
+version: '1'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: dockerfile.mysqlready
+    links:
+      - mysql:db
+    volumes:
+      - '{specify_your}'
+    ports:
+      - "8000:8080"
+    command: "php -S 0.0.0.0:8080"
+    working_dir: {specify_your}
+    container_name: phpServer
+  mysql:
+    image: mysql
+    ports:
+      - "3306:3306"
+    command: mysqld --user=root --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_PASSWORD={your_mysql_root_password}
+    restart: always
+    container_name: mysqlServer
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql:db
+    depends_on: 
+      - mysql
+    ports:
+      - "8082:80"
+    environment:
+      - PMA_USER=root
+      - PMA_PASSWORD={your_mysql_root_password}
+      - PHP_UPLOAD_MAX_FILESIZE=100MB
+    container_name: phpAdminSQLHost
+```
